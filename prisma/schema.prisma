@@ -1,15 +1,97 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  WORKER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(WORKER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  jobs      Job[]
+}
+
+model Building {
+  id            String   @id @default(cuid())
+  direccion     String   @unique
+  administrador String
+  contacto      String?
+  telefono      String?
+  idTipo        String   // "CUIT" | "DNI" | "NINGUNO"
+  idValor       String?
+  createdAt     DateTime @default(now())
+  jobs          Job[]
+}
+
+model JobType {
+  id     String  @id @default(cuid())
+  nombre String  @unique
+  activo Boolean @default(true)
+  items  JobItem[]
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  fecha        DateTime
+  buildingId   String
+  building     Building @relation(fields: [buildingId], references: [id])
+  workerId     String
+  worker       User     @relation(fields: [workerId], references: [id])
+  seFactura    Boolean  @default(true)
+  importeTotal Decimal  @default(0)
+  piso         String?
+  depto        String?
+  estado       String   @default("BORRADOR") // BORRADOR|CONFIRMADO|FACTURADO
+  createdAt    DateTime @default(now())
+  items        JobItem[]
+  invoiceId    String?
+  invoice      Invoice? @relation(fields: [invoiceId], references: [id])
+}
+
+model JobItem {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobTypeId String
+  jobType   JobType  @relation(fields: [jobTypeId], references: [id])
+  cantidad  Int      @default(1)
+}
+
+model Emitter {
+  id           String   @id @default(cuid())
+  cuit         String   @unique
+  razonSocial  String
+  puntoVenta   Int?
+  createdAt    DateTime @default(now())
+  invoices     Invoice[]
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  fechaEmision  DateTime @default(now())
+  emisorId      String
+  emisor        Emitter  @relation(fields: [emisorId], references: [id])
+  receptorTipo  String   // "CUIT" | "DNI" | "NINGUNO"
+  receptorValor String?
+  receptorDom   String
+  total         Decimal
+  cae           String?
+  caeVto        DateTime?
+  puntoVenta    Int?
+  numero        Int?
+  pdfFile       String?
+  jobs          Job[]
+  createdAt     DateTime @default(now())
 }

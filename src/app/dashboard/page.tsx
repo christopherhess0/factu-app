@@ -11,9 +11,7 @@ export default function Dashboard() {
       <p>Rol: {(session as any)?.role ?? "-"}</p>
       <div className="space-x-3">
         <Link href="/">Inicio</Link>
-        <button onClick={() => signOut({ callbackUrl: "/" })} className="underline">
-          Salir
-        </button>
+        <button onClick={() => signOut({ callbackUrl: "/" })} className="underline">Salir</button>
       </div>
     </main>
   );
